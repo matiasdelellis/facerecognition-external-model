@@ -1,6 +1,12 @@
 # Facerecognition External Model
 This is only the reference model, to implement any external model for the Nextcloud Face Recognition application. This implements the same [model 1](https://github.com/matiasdelellis/facerecognition/wiki/Models#model-1) that already exists in the Facial Recognition application, but it allows to run it on an external machine, which can be faster, and thus free up important resources from the server where you have Nextcloud installed.
 
+## Privacy
+Take into account how the application works. You must send a copy of each of your images (or of your clients), from your Nextcloud instance to the Server where you run this service.
+The images are sent via POST, and are immediately deleted after being analyzed. The api key is sent in the headers of each queries. This is only as secure as the connection between the two communicating devices. If you run it outside your local network, you should minimally use it behind an HTTPS proxy, which protects your data.
+
+So, please. Think seriously about data security before running this service outside of your local network.
+
 ## Dependencies
 * python3-flask
 * python3-dlib

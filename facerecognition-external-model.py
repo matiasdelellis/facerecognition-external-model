@@ -2,6 +2,7 @@ from flask import Flask, request, abort
 from functools import wraps
 import dlib
 import os
+import json
 
 app = Flask(__name__)
 
@@ -66,6 +67,36 @@ def detect_faces():
 
     return response;
 
+@app.route('/compute', methods=['POST'])
+@require_appkey
+def compute():
+    uploaded_file = request.files['file']
+    face_json = json.loads(request.form.get('face'))
+
+    filename = os.path.basename(uploaded_file.filename)
+    uploaded_file.save(filename)
+
+    response = {
+      "filename": filename
+    }
+
+    sp = dlib.shape_predictor(predictor_path)
+    facerec = dlib.face_recognition_model_v1(face_rec_model_path)
+
+    img = dlib.load_rgb_image(filename)
+
+    shape = sp(img, jsonToRect(face_json))
+    descriptor = facerec.compute_face_descriptor(img, shape)
+
+    face_json['landmarks'] = shapeToList(shape)
+    face_json['descriptor'] = descriptorToList(descriptor)
+
+    response['face'] = face_json
+
+    os.remove(filename)
+
+    return response;
+
 @app.route('/open')
 @require_appkey
 def open_model():
@@ -88,3 +119,6 @@ def descriptorToList(descriptor):
     for i in range(len(descriptor)):
         descriptorList.append(descriptor[i])
     return descriptorList
+
+def jsonToRect(json):
+    return dlib.rectangle(json['top'], json['right'], json['bottom'], json['left'])

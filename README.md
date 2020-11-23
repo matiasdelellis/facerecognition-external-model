@@ -31,7 +31,16 @@ bzip2 -d vendor/models/1/shape_predictor_5_face_landmarks.dat.bz2
 
 ## Usage
 
-### Launch the Model Server
+### Configure Service
+
+You must generate a shared api key and save it in the file `api.key`.
+```
+[matias@nube facerecognition-external-model]$ openssl rand -base64 32
+NZ9ciQuH0djnyyTcsDhNL7so6SVrR01znNnv0iXLrSk=
+[matias@nube facerecognition-external-model]$ echo NZ9ciQuH0djnyyTcsDhNL7so6SVrR01znNnv0iXLrSk= > api.key 
+```
+
+### Launch Service
 ```
 [matias@nube facerecognition-external-model]$ export FLASK_APP=facerecognition-external-model.py
 [matias@nube facerecognition-external-model]$ flask run
@@ -43,16 +52,17 @@ bzip2 -d vendor/models/1/shape_predictor_5_face_landmarks.dat.bz2
  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 ```
 
-Note that this model is running on `http://127.0.0.1:5000/`
+Note that this Service is running on `http://127.0.0.1:5000/`
 
 ### Use
-You must configure Nextcloud, indicating that you have an external model at this address. So, you must add the address inside the `config/config.php` file.
+You must configure Nextcloud, indicating that you have an external model at this address, and the shared api key. So, you must add these lines to your `config/config.php` file.
 ```
 [matias@nube ~]$ cat nextcloud/config/config.php
 <?php
 $CONFIG = array (
   ...........................................
   'externalModelUrl' => 'http://127.0.0.1:5000',
+  'externalModelApiKey' => 'NZ9ciQuH0djnyyTcsDhNL7so6SVrR01znNnv0iXLrSk=',
   ...............................
 );
 ```

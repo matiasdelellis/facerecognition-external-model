@@ -1,8 +1,12 @@
 # Facerecognition External Model
-This is only the reference model, to implement any external model for the Nextcloud Face Recognition application
+This is only the reference model, to implement any external model for the Nextcloud Face Recognition application. This implements the same [model 1](https://github.com/matiasdelellis/facerecognition/wiki/Models#model-1) that already exists in the Facial Recognition application, but it allows to run it on an external machine, which can be faster, and thus free up important resources from the server where you have Nextcloud installed.
+
+## Dependencies
+* Dlib python bindings.
+* Flask
 
 ## Install
-
+Just clone this repo and install the resnet models.
 ```
 [matias@nube ~]$ git clone https://github.com/matiasdelellis/facerecognition-external-model.git
 Clonando en 'facerecognition-external-model'...
@@ -38,3 +42,26 @@ bzip2 -d vendor/models/1/shape_predictor_5_face_landmarks.dat.bz2
  * Debug mode: off
  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 ```
+
+Note that this model is running on `http://127.0.0.1:5000/`
+
+### Use
+You must configure Nextcloud, indicating that you have an external model at this address. So, you must add the address inside the `config/config.php` file.
+```
+[matias@nube ~]$ cat nextcloud/config/config.php
+<?php
+$CONFIG = array (
+  ...........................................
+  'externalModelUrl' => 'http://127.0.0.1:5000',
+  ...............................
+);
+```
+
+You can now configure the external model (which is the 5), in the same way that it did until now.
+```
+[matias@nube nextcloud]$ sudo -u apache php occ face:setup -m 5
+The files of model 5 (ExternalModel) are already installed
+The model 5 (ExternalModel) was configured as default
+```
+
+... and that's all my friends. You can now continue with the backgroud_task. :smiley:

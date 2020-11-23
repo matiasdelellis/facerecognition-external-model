@@ -1,4 +1,5 @@
-from flask import Flask, request
+from flask import Flask, request, abort
+from functools import wraps
 import dlib
 import os
 
@@ -11,7 +12,20 @@ face_rec_model_path = "vendor/models/1/dlib_face_recognition_resnet_model_v1.dat
 #app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.jpeg']
 #app.config['UPLOAD_PATH'] = 'images'
 
+def require_appkey(view_function):
+    @wraps(view_function)
+    def decorated_function(*args, **kwargs):
+        with open('api.key', 'r') as apikey:
+            key = apikey.read().replace('\n', '')
+        if request.headers.get('x-api-key') and request.headers.get('x-api-key') == key:
+            return view_function(*args, **kwargs)
+        else:
+            abort(401)
+
+    return decorated_function
+
 @app.route('/detect', methods=['POST'])
+@require_appkey
 def detect_faces():
     uploaded_file = request.files['file']
 
@@ -53,6 +67,7 @@ def detect_faces():
     return response;
 
 @app.route('/open')
+@require_appkey
 def open_model():
     return {
       "preferred_mimetype": "image/jpeg",

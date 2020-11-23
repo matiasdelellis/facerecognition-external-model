@@ -1,5 +1,6 @@
 from flask import Flask, request
 import dlib
+import os
 
 app = Flask(__name__)
 
@@ -7,23 +8,25 @@ detector_path = "vendor/models/1/mmod_human_face_detector.dat"
 predictor_path = "vendor/models/1/shape_predictor_5_face_landmarks.dat"
 face_rec_model_path = "vendor/models/1/dlib_face_recognition_resnet_model_v1.dat"
 
-app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.jpeg']
-app.config['UPLOAD_PATH'] = 'images'
+#app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.jpeg']
+#app.config['UPLOAD_PATH'] = 'images'
 
 @app.route('/detect', methods=['POST'])
 def detect_faces():
     uploaded_file = request.files['file']
-    uploaded_file.save(uploaded_file.filename)
+
+    filename = os.path.basename(uploaded_file.filename)
+    uploaded_file.save(filename)
 
     response = {
-      "filename": uploaded_file.filename
+      "filename": filename
     }
 
     detector = dlib.cnn_face_detection_model_v1(detector_path)
     sp = dlib.shape_predictor(predictor_path)
     facerec = dlib.face_recognition_model_v1(face_rec_model_path)
 
-    img = dlib.load_rgb_image(uploaded_file.filename)
+    img = dlib.load_rgb_image(filename)
     dets = detector(img)
 
     response["faces-count"] = len(dets)
@@ -45,13 +48,15 @@ def detect_faces():
 
     response["faces"] = faces
 
+    os.remove(filename)
+
     return response;
 
 @app.route('/open')
 def open_model():
     return {
       "preferred_mimetype": "image/jpeg",
-      "maximum_area"      : 1920*1080
+      "maximum_area"      : 3840*2160
     }
 
 def shapeToList(shape):

@@ -105,6 +105,20 @@ def open_model():
       "maximum_area"      : 3840*2160
     }
 
+@app.route('/welcome')
+def welcome():
+    if (not os.path.exists(detector_path) or
+        not os.path.exists(predictor_path) or
+        not os.path.exists(face_rec_model_path)):
+        return {
+            'facerecognition-external-model': 'Neural network files are missing. Install it',
+            'verrion': '0.1.0'
+        };
+    return {
+        'facerecognition-external-model': 'welcome',
+        'verrion': '0.1.0'
+    };
+
 def shapeToList(shape):
     partList = [];
     for i in range(shape.num_parts):

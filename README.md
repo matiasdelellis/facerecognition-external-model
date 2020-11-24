@@ -54,28 +54,47 @@ We must obtain the IP of the machine that runs this service.
 ```
 
 ### Launch Service
-Launch the service indicating this IP.
+Launch the service indicating this IP and some TCP port such as `8080`.
 ```
 [matias@laptop facerecognition-external-model]$ export FLASK_APP=facerecognition-external-model.py
-[matias@laptop facerecognition-external-model]$ flask run -h 192.168.1.103
+[matias@laptop facerecognition-external-model]$ flask run -h 192.168.1.103 -p 8080
  * Serving Flask app "facerecognition-external-model.py"
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
    Use a production WSGI server instead.
  * Debug mode: off
- * Running on http://192.168.1.103:5000/ (Press CTRL+C to quit)
+ * Running on http://192.168.1.103:8080/ (Press CTRL+C to quit)
 ```
 
-Note that this service is running on `http://192.168.1.103:5000/`
+Note that this service is running on `http://192.168.1.103:8080/`
+
+### Test
+You can test if the service is running using curl.
+```
+[matias@laptop ~]$ curl http://192.168.1.103:8080/welcome
+{"facerecognition-external-model":"welcome","verrion":"0.1.0"}
+```
+
+Now, on the machine that you have the nextclood instance, you must check that it can access the service.
+```
+[matias@nube ~]$ curl http://192.168.1.103:8080/welcome
+{"facerecognition-external-model":"welcome","verrion":"0.1.0"}
+```
+
+If curl responds something like the following, surely you have a firewall with port `8080` closed, and you should open it.
+```
+[matias@nube ~]$ curl http://192.168.1.103:8080/welcome
+curl: (7) Failed to connect to 192.168.1.103 port 8080: No route to host
+```
 
 ### Use
-You must configure Nextcloud, indicating that you have an external model at this address, and the shared api key. So, you must add these lines to your `config/config.php` file.
+If the service is accessible, you can now configure Nextcloud, indicating that you have an external model at this address, and the shared api key. So, you must add these lines to your `config/config.php` file.
 ```
 [matias@nube ~]$ cat nextcloud/config/config.php
 <?php
 $CONFIG = array (
   ...........................................
-  'externalModelUrl' => 'http://192.168.1.103:5000',
+  'externalModelUrl' => 'http://192.168.1.103:8080',
   'externalModelApiKey' => 'NZ9ciQuH0djnyyTcsDhNL7so6SVrR01znNnv0iXLrSk=',
   ...............................
 );

@@ -94,8 +94,8 @@ If the service is accessible, you can now configure Nextcloud, indicating that y
 <?php
 $CONFIG = array (
   ...........................................
-  'externalModelUrl' => 'http://192.168.1.103:8080',
-  'externalModelApiKey' => 'NZ9ciQuH0djnyyTcsDhNL7so6SVrR01znNnv0iXLrSk=',
+  'facerecognition.external_model_url' => 'http://192.168.1.103:8080',
+  'facerecognition.external_model_api_key' => 'NZ9ciQuH0djnyyTcsDhNL7so6SVrR01znNnv0iXLrSk=',
   ...............................
 );
 ```

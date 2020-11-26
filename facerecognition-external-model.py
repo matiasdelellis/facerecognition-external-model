@@ -4,15 +4,24 @@ import dlib
 import os
 import json
 
-app = Flask(__name__)
-
+# Model files
 detector_path = "vendor/models/1/mmod_human_face_detector.dat"
 predictor_path = "vendor/models/1/shape_predictor_5_face_landmarks.dat"
 face_rec_model_path = "vendor/models/1/dlib_face_recognition_resnet_model_v1.dat"
 
-#app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.jpeg']
-#app.config['UPLOAD_PATH'] = 'images'
+# Check image folder
+folder_path = 'images'
+if (not os.path.exists(folder_path)):
+    os.mkdir(folder_path)
 
+# Clean old files if exists.
+for filename in os.listdir(folder_path):
+    os.unlink(os.path.join(folder_path, filename))
+
+# Model service
+app = Flask(__name__)
+
+# Security of model service
 def require_appkey(view_function):
     @wraps(view_function)
     def decorated_function(*args, **kwargs):
@@ -25,13 +34,16 @@ def require_appkey(view_function):
 
     return decorated_function
 
+# Model service endpints
 @app.route('/detect', methods=['POST'])
 @require_appkey
 def detect_faces():
     uploaded_file = request.files['file']
 
     filename = os.path.basename(uploaded_file.filename)
-    uploaded_file.save(filename)
+
+    image_path = os.path.join(folder_path, filename)
+    uploaded_file.save(image_path)
 
     response = {
       "filename": filename
@@ -41,7 +53,7 @@ def detect_faces():
     sp = dlib.shape_predictor(predictor_path)
     facerec = dlib.face_recognition_model_v1(face_rec_model_path)
 
-    img = dlib.load_rgb_image(filename)
+    img = dlib.load_rgb_image(image_path)
     dets = detector(img)
 
     response["faces-count"] = len(dets)
@@ -63,7 +75,7 @@ def detect_faces():
 
     response["faces"] = faces
 
-    os.remove(filename)
+    os.remove(image_path)
 
     return response;
 
@@ -119,6 +131,7 @@ def welcome():
         'verrion': '0.1.0'
     };
 
+# Conversion utilities
 def shapeToList(shape):
     partList = [];
     for i in range(shape.num_parts):

@@ -13,7 +13,7 @@ COPY --from=builder /app/dlib*.whl /tmp/
 COPY --from=builder /app/vendor/ /app/vendor/
 COPY facerecognition-external-model.py /app/
 
-RUN pip install flask \
+RUN pip install flask numpy \
     && pip install --no-index -f /tmp/ dlib \
     && rm /tmp/dlib*.whl
 

@@ -25,8 +25,11 @@ app = Flask(__name__)
 def require_appkey(view_function):
     @wraps(view_function)
     def decorated_function(*args, **kwargs):
-        with open('api.key', 'r') as apikey:
-            key = apikey.read().replace('\n', '')
+        if 'API_KEY' in os.environ:
+            key = os.environ.get('API_KEY')
+        else:
+            with open('api.key', 'r') as apikey:
+                key = apikey.read().replace('\n', '')
         if request.headers.get('x-api-key') and request.headers.get('x-api-key') == key:
             return view_function(*args, **kwargs)
         else:

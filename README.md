@@ -9,9 +9,11 @@ So, please. Think seriously about data security before running this service outs
 
 ## Docker
 The fastest way to get this up and running without manual installation and configuration is a docker image. You only have to define the api key and the exposed port:
-```
-docker build -t facerecognition https://github.com/matiasdelellis/facerecognition-external-model.git &&
-docker run -i --rm -p 8080:5000 -e API_KEY="super-secret" facerecognition
+```sh
+docker build -t facerecognition https://github.com/matiasdelellis/facerecognition-external-model.git
+docker run --rm -i -p 8080:5000 -e API_KEY="super-secret" facerecognition
+# possible is also api key as file
+docker run --rm -i -p 8080:5000 -v /path/to/api.key:/app/api.key facerecognition
 ```
 
 ## Manual

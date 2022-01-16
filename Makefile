@@ -44,5 +44,5 @@ model-4: model-1 model-3
 download-models: model-${FACE_MODEL}
 
 serve: download-models
-	export FLASK_APP=facerecognition-external-model.py
+	export FLASK_APP=facerecognition-external-model.py;\
 	flask run

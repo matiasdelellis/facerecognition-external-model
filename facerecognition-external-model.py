@@ -22,6 +22,10 @@ for filename in os.listdir(folder_path):
 
 # Model service
 app = Flask(__name__)
+try:
+    app.config["face_model"] = os.environ["FACE_MODEL"]
+except KeyError:
+    app.config["face_model"] = 1
 
 
 # Security of model service

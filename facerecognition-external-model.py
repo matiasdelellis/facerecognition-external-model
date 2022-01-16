@@ -134,9 +134,9 @@ def welcome():
         return {
             "facerecognition-external-model":
                 "Neural network files are missing. Install it",
-            "verrion": "0.1.0",
+            "version": "0.1.0",
         }
-    return {"facerecognition-external-model": "welcome", "verrion": "0.1.0"}
+    return {"facerecognition-external-model": "welcome", "version": "0.1.0"}
 
 
 # Conversion utilities

@@ -5,10 +5,20 @@ import os
 import json
 
 # Model files
-detector_path = "vendor/models/1/mmod_human_face_detector.dat"
-predictor_path = "vendor/models/1/shape_predictor_5_face_landmarks.dat"
+detector_paths = (
+    "vendor/models/1/mmod_human_face_detector.dat",
+    "vendor/models/2/mmod_human_face_detector.dat",
+    None,
+)
+predictor_path = (
+    "vendor/models/1/shape_predictor_5_face_landmarks.dat",
+    "vendor/models/2/shape_predictor_68_face_landmarks.dat",
+    "vendor/models/3/shape_predictor_5_face_landmarks.dat",
+)
 face_rec_model_path = (
-    "vendor/models/1/dlib_face_recognition_resnet_model_v1.dat"
+    "vendor/models/1/dlib_face_recognition_resnet_model_v1.dat",
+    "vendor/models/2/dlib_face_recognition_resnet_model_v1.dat",
+    "vendor/models/3/dlib_face_recognition_resnet_model_v1.dat",
 )
 
 # Check image folder

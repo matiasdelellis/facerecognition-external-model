@@ -1,3 +1,4 @@
+from typing import Callable, Tuple
 from flask import Flask, request, abort
 from functools import wraps
 import dlib
@@ -5,22 +6,29 @@ import os
 import json
 import numpy
 
-# Model files
-detector_paths = (
+# Model files (FACE_MODEL is 1-indexed)
+DETECTOR_PATHS = (
+    None,
     "vendor/models/1/mmod_human_face_detector.dat",
     "vendor/models/2/mmod_human_face_detector.dat",
     None,
 )
-predictor_paths = (
+PREDICTOR_PATHS = (
+    None,
     "vendor/models/1/shape_predictor_5_face_landmarks.dat",
     "vendor/models/2/shape_predictor_68_face_landmarks.dat",
     "vendor/models/3/shape_predictor_5_face_landmarks.dat",
 )
-face_rec_model_paths = (
+FACE_REC_MODEL_PATHS = (
+    None,
     "vendor/models/1/dlib_face_recognition_resnet_model_v1.dat",
     "vendor/models/2/dlib_face_recognition_resnet_model_v1.dat",
     "vendor/models/3/dlib_face_recognition_resnet_model_v1.dat",
 )
+
+CNN_DETECTOR: object = None
+PREDICTOR: object = None
+FACE_REC: object = None
 
 # Check image folder
 folder_path = "images"
@@ -34,9 +42,9 @@ for filename in os.listdir(folder_path):
 # Model service
 app = Flask(__name__)
 try:
-    faceModel = int(os.environ["FACE_MODEL"]) - 1
+    FACE_MODEL = int(os.environ["FACE_MODEL"])
 except KeyError:
-    faceModel = 0
+    FACE_MODEL = 1
 
 
 # Security of model service
@@ -56,90 +64,131 @@ def require_appkey(view_function):
     return decorated_function
 
 
+# model 1 and 2 face detection
+def cnn_detect(img: numpy.ndarray) -> list:
+    dets: list = CNN_DETECTOR(img)
+
+    faces = []
+    for det in dets:
+        rec: object = dlib.rectangle(
+            det.rect.left(), det.rect.top(), det.rect.right(), det.rect.bottom()
+        )
+        shape: dlib.full_object_detection = PREDICTOR(img, rec)
+        descriptor: dlib.vector = FACE_REC.compute_face_descriptor(img, shape)
+        faces.append(
+            {
+                "detection_confidence": det.confidence,
+                "left": det.rect.left(),
+                "top": det.rect.top(),
+                "right": det.rect.right(),
+                "bottom": det.rect.bottom(),
+                "landmarks": shapeToList(shape),
+                "descriptor": descriptorToList(descriptor),
+            }
+        )
+    return faces
+
+
+# model 3 face detection
+def hog_detect(img: numpy.ndarray) -> list:
+    dets: list = HOG_DETECTOR(img, 1)
+
+    faces = []
+    for det in dets:
+        landmarks: dlib.full_object_detection = PREDICTOR(img, det)
+        descriptor = FACE_REC.compute_face_descriptor(img, landmarks)
+        faces.append(
+            {
+                "detection_confidence": 1.1,
+                "left": det.left(),
+                "top": det.top(),
+                "right": det.right(),
+                "bottom": det.bottom(),
+                "landmarks": shapeToList(landmarks),
+                "descriptor": descriptorToList(descriptor),
+            }
+        )
+    return faces
+
+
+# model 4 face detection
+def cnn_hog_detect(img: numpy.ndarray) -> Tuple[int, list]:
+    cnn_faces = cnn_detect(img)
+    if len(cnn_faces) == 0:
+        return []
+
+    hog_faces = hog_detect(img)
+    detected_faces = []
+    for proposed_face in cnn_faces:
+        detected_faces.append(validate_face(proposed_face, hog_faces))
+    return detected_faces
+
+
+DETECT_FACES_FUNCTIONS: Tuple[Callable[[numpy.ndarray], Tuple[int, list]]] = (
+    cnn_detect,
+    cnn_detect,
+    hog_detect,
+    cnn_hog_detect,
+)
+
+
 # Model service endpints
 @app.route("/detect", methods=["POST"])
 @require_appkey
 def detect_faces() -> dict:
-    uploaded_file: str = request.files["file"]
+    uploaded_file = request.files["file"]
 
     filename = os.path.basename(uploaded_file.filename)
 
     image_path = os.path.join(folder_path, filename)
     uploaded_file.save(image_path)
-
-    response: dict = {"filename": filename}
-
-    detector: object = dlib.cnn_face_detection_model_v1(
-        detector_paths[faceModel]
-    )
-    sp: object = dlib.shape_predictor(predictor_paths[faceModel])
-    facerec: object = dlib.face_recognition_model_v1(
-        face_rec_model_paths[faceModel]
-    )
-
     img: numpy.ndarray = dlib.load_rgb_image(image_path)
-    dets: list = detector(img)
 
-    response["faces-count"] = len(dets)
-
-    faces = []
-    for k, d in enumerate(dets):
-        rec: object = dlib.rectangle(
-            d.rect.left(), d.rect.top(), d.rect.right(), d.rect.bottom()
-        )
-        shape: dlib.full_object_detection = sp(img, rec)
-        descriptor: dlib.vector = facerec.compute_face_descriptor(img, shape)
-        faces.append(
-            {
-                "detection_confidence": d.confidence,
-                "left": d.rect.left(),
-                "top": d.rect.top(),
-                "right": d.rect.right(),
-                "bottom": d.rect.bottom(),
-                "landmarks": shapeToList(shape),
-                "descriptor": descriptorToList(descriptor),
-            }
-        )
-
-    response["faces"] = faces
+    faces = DETECT_FACES_FUNCTIONS[FACE_MODEL](img)
 
     os.remove(image_path)
 
-    return response
+    return {"filename": filename, "faces-count": len(faces), "faces": faces}
 
 
 @app.route("/compute", methods=["POST"])
 @require_appkey
 def compute():
     uploaded_file = request.files["file"]
-    face_json: object = json.loads(request.form.get("face"))
+    face_json: dict = json.loads(request.form.get("face"))
 
-    filename = os.path.basename(uploaded_file.filename)
+    filename: str = os.path.basename(uploaded_file.filename)
     uploaded_file.save(filename)
-
-    response = {"filename": filename}
-
-    sp = dlib.shape_predictor(predictor_paths[faceModel])
-    facerec = dlib.face_recognition_model_v1(face_rec_model_paths[faceModel])
 
     img: numpy.ndarray = dlib.load_rgb_image(filename)
 
-    shape: dlib.full_object_detection = sp(img, jsonToRect(face_json))
-    descriptor: dlib.vector = facerec.compute_face_descriptor(img, shape)
+    shape: dlib.full_object_detection = PREDICTOR(img, jsonToRect(face_json))
+    descriptor: dlib.vector = FACE_REC.compute_face_descriptor(img, shape)
+
+    os.remove(filename)
 
     face_json["landmarks"] = shapeToList(shape)
     face_json["descriptor"] = descriptorToList(descriptor)
 
-    response["face"] = face_json
-
-    os.remove(filename)
-
-    return response
+    return {"filename": filename, "face": face_json}
 
 
 @app.route("/open")
 @require_appkey
 def open_model():
+    global CNN_DETECTOR, HOG_DETECTOR, PREDICTOR, FACE_REC
+    # set up model 4 like it was model 1
+    model = FACE_MODEL if FACE_MODEL != 4 else 1
+    # we don't need the cnn detector for model 3
+    if FACE_MODEL != 3:
+        CNN_DETECTOR = dlib.cnn_face_detection_model_v1(DETECTOR_PATHS[model])
+    # we need the hog detector for models 3 and 4
+    if FACE_MODEL in (3, 4):
+        HOG_DETECTOR = dlib.get_frontal_face_detector()
+
+    PREDICTOR = dlib.shape_predictor(PREDICTOR_PATHS[model])
+    FACE_REC = dlib.face_recognition_model_v1(FACE_REC_MODEL_PATHS[model])
+
     return {"preferred_mimetype": "image/jpeg", "maximum_area": 3840 * 2160}
 
 
@@ -147,21 +196,21 @@ def open_model():
 def welcome():
     if (
         (
-            detector_paths[faceModel]
-            and not os.path.exists(detector_paths[faceModel])
+            DETECTOR_PATHS[FACE_MODEL]
+            and not os.path.exists(DETECTOR_PATHS[FACE_MODEL])
         )
         or (
-            predictor_paths[faceModel]
-            and not os.path.exists(predictor_paths[faceModel])
+            PREDICTOR_PATHS[FACE_MODEL]
+            and not os.path.exists(PREDICTOR_PATHS[FACE_MODEL])
         )
         or (
-            face_rec_model_paths[faceModel]
-            and not os.path.exists(face_rec_model_paths[faceModel])
+            FACE_REC_MODEL_PATHS[FACE_MODEL]
+            and not os.path.exists(FACE_REC_MODEL_PATHS[FACE_MODEL])
         )
     ):
         return {
             "facerecognition-external-model":
-                "Neural network files are missing. Install it",
+                "Neural network files are missing. Install them",
             "version": "0.1.0",
         }
     return {"facerecognition-external-model": "welcome", "version": "0.1.0"}
@@ -186,3 +235,41 @@ def jsonToRect(json) -> dlib.rectangle:
     return dlib.rectangle(
         json["top"], json["right"], json["bottom"], json["left"]
     )
+
+
+def overlap_percent(first: dlib.rectangle, second: dlib.rectangle) -> float:
+    # if there is not intersection, return 0.0
+    # (right is a larger value than left, bottom is larger than top)
+    if (
+        first["left"] >= second["right"]
+        or second["left"] >= first["right"]
+        or first["top"] >= second["bottom"]
+        or second["top"] >= first["bottom"]
+    ):
+        return 0.0
+
+    # find the corners of the overlapping area
+    left = max(first["left"], second["left"])
+    right = max(first["right"], second["right"])
+    top = max(first["top"], second["top"])
+    bottom = max(first["bottom"], second["bottom"])
+
+    # areas
+    first_area = (first["right"] - first["left"]) * (
+        first["bottom"] - first["top"]
+    )
+    second_area = (second["right"] - second["left"]) * (
+        second["bottom"] - second["top"]
+    )
+    overlap_area = (right - left) * (bottom - top)
+
+    return overlap_area / (first_area + second_area - overlap_area)
+
+
+def validate_face(proposed_face: dict, face_list: list) -> dict:
+    for face in face_list:
+        overlap = overlap_percent(proposed_face, face)
+        if overlap >= 0.35:
+            return proposed_face
+    proposed_face["detection_confidence"] *= 0.8
+    return proposed_face

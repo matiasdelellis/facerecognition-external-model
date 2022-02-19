@@ -67,6 +67,8 @@ Launch the service indicating this IP and some TCP port such as `8080`. Also, sp
  * Running on http://192.168.1.103:8080/ (Press CTRL+C to quit)
 ```
 
+Or you can just run: `make FACE_MODEL=1 serve`.
+
 Note that this service is running on `http://192.168.1.103:8080/`
 
 ### Test

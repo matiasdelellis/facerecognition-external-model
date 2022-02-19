@@ -123,8 +123,9 @@ def cnn_hog_detect(img: numpy.ndarray) -> Tuple[int, list]:
         detected_faces.append(validate_face(proposed_face, hog_faces))
     return detected_faces
 
-
+# 1-indexed
 DETECT_FACES_FUNCTIONS: Tuple[Callable[[numpy.ndarray], Tuple[int, list]]] = (
+    None,
     cnn_detect,
     cnn_detect,
     hog_detect,

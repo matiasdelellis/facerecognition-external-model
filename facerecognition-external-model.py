@@ -123,7 +123,7 @@ def cnn_hog_detect(img: numpy.ndarray) -> Tuple[int, list]:
         detected_faces.append(validate_face(proposed_face, hog_faces))
     return detected_faces
 
-# 1-indexed
+
 DETECT_FACES_FUNCTIONS: Tuple[Callable[[numpy.ndarray], Tuple[int, list]]] = (
     None,
     cnn_detect,
@@ -195,18 +195,19 @@ def open_model():
 
 @app.route("/welcome")
 def welcome():
+    model = FACE_MODEL if FACE_MODEL != 4 else 1
     if (
         (
-            DETECTOR_PATHS[FACE_MODEL]
-            and not os.path.exists(DETECTOR_PATHS[FACE_MODEL])
+            DETECTOR_PATHS[model]
+            and not os.path.exists(DETECTOR_PATHS[model])
         )
         or (
-            PREDICTOR_PATHS[FACE_MODEL]
-            and not os.path.exists(PREDICTOR_PATHS[FACE_MODEL])
+            PREDICTOR_PATHS[model]
+            and not os.path.exists(PREDICTOR_PATHS[model])
         )
         or (
-            FACE_REC_MODEL_PATHS[FACE_MODEL]
-            and not os.path.exists(FACE_REC_MODEL_PATHS[FACE_MODEL])
+            FACE_REC_MODEL_PATHS[model]
+            and not os.path.exists(FACE_REC_MODEL_PATHS[model])
         )
     ):
         return {

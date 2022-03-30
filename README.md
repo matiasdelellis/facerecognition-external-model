@@ -13,7 +13,7 @@ So, please. Think seriously about data security before running this service outs
 * python3-numpy
 
 ## Install
-Just clone this repo and install the models. Use FACE_MODEL to specify rhe desired model.
+Just clone this repo and install the models. Use FACE_MODEL to specify the desired model.
 ```
 [matias@laptop ~]$ git clone https://github.com/matiasdelellis/facerecognition-external-model.git
 Clonando en 'facerecognition-external-model'...

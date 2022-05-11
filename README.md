@@ -1,5 +1,5 @@
 # Facerecognition External Model
-This is only the reference model, to implement any external model for the Nextcloud Face Recognition application. This implements the same [model 1](https://github.com/matiasdelellis/facerecognition/wiki/Models#model-1) that already exists in the Facial Recognition application, but it allows to run it on an external machine, which can be faster, and thus free up important resources from the server where you have Nextcloud installed.
+This is only the reference model, to implement any external model for the Nextcloud Face Recognition application. This implements the same [models](https://github.com/matiasdelellis/facerecognition/wiki/Models) that already exists in the Facial Recognition application, but it allows to run it on an external machine, which can be faster, and thus free up important resources from the server where you have Nextcloud installed.
 
 ## Privacy
 Take into account how the application works. You must send a copy of each of your images (or of your clients), from your Nextcloud instance to the Server where you run this service.
@@ -13,7 +13,7 @@ So, please. Think seriously about data security before running this service outs
 * python3-numpy
 
 ## Install
-Just clone this repo and install the resnet models.
+Just clone this repo and install the models. Use FACE_MODEL to specify the desired model.
 ```
 [matias@laptop ~]$ git clone https://github.com/matiasdelellis/facerecognition-external-model.git
 Clonando en 'facerecognition-external-model'...
@@ -23,7 +23,7 @@ remote: Compressing objects: 100% (4/4), done.
 remote: Total 4 (delta 0), reused 4 (delta 0), pack-reused 0
 Desempaquetando objetos: 100% (4/4), 1.38 KiB | 1.38 MiB/s, listo.
 [matias@laptop ~]$ cd facerecognition-external-model/
-[matias@laptop facerecognition-external-model]$ make download-models 
+[matias@laptop facerecognition-external-model]$ make FACE_MODEL=1 download-models 
 mkdir -p vendor/models/1
 wget https://github.com/davisking/dlib-models/raw/94cdb1e40b1c29c0bfcaf7355614bfe6da19460e/mmod_human_face_detector.dat.bz2 -O vendor/models/1/mmod_human_face_detector.dat.bz2
 bzip2 -d vendor/models/1/mmod_human_face_detector.dat.bz2
@@ -54,9 +54,10 @@ We must obtain the IP of the machine that runs this service.
 ```
 
 ### Launch Service
-Launch the service indicating this IP and some TCP port such as `8080`.
+Launch the service indicating this IP and some TCP port such as `8080`. Also, specify the recognition model desired, using the `FACE_MODEL` environment variable (if not specified, model 1 will be used).
 ```
 [matias@laptop facerecognition-external-model]$ export FLASK_APP=facerecognition-external-model.py
+[matias@laptop facerecognition-external-model]$ export FACE_MODEL=1
 [matias@laptop facerecognition-external-model]$ flask run -h 192.168.1.103 -p 8080
  * Serving Flask app "facerecognition-external-model.py"
  * Environment: production
@@ -66,19 +67,21 @@ Launch the service indicating this IP and some TCP port such as `8080`.
  * Running on http://192.168.1.103:8080/ (Press CTRL+C to quit)
 ```
 
+Or you can just run: `make FACE_MODEL=1 serve`.
+
 Note that this service is running on `http://192.168.1.103:8080/`
 
 ### Test
 You can test if the service is running using curl.
 ```
 [matias@laptop ~]$ curl http://192.168.1.103:8080/welcome
-{"facerecognition-external-model":"welcome","verrion":"0.1.0"}
+{"facerecognition-external-model":"welcome","version":"0.1.0"}
 ```
 
 Now, on the machine that you have the nextclood instance, you must check that it can access the service.
 ```
 [matias@nube ~]$ curl http://192.168.1.103:8080/welcome
-{"facerecognition-external-model":"welcome","verrion":"0.1.0"}
+{"facerecognition-external-model":"welcome","version":"0.1.0"}
 ```
 
 If curl responds something like the following, surely you have a firewall with port `8080` closed, and you should open it.

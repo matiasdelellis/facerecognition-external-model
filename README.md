@@ -7,13 +7,23 @@ The images are sent via POST, and are immediately deleted after being analyzed. 
 
 So, please. Think seriously about data security before running this service outside of your local network.
 
-## Dependencies
+## Docker
+The fastest way to get this up and running without manual installation and configuration is a docker image. You only have to define the api key and the exposed port:
+```sh
+docker build -t facerecognition https://github.com/matiasdelellis/facerecognition-external-model.git
+docker run --rm -i -p 8080:5000 -e API_KEY="super-secret" facerecognition
+# possible is also api key as file
+docker run --rm -i -p 8080:5000 -v /path/to/api.key:/app/api.key facerecognition
+```
+
+## Manual
+### Dependencies
 * python3-flask
 * python3-dlib
 * python3-numpy
 
-## Install
-Just clone this repo and install the models. Use FACE_MODEL to specify the desired model.
+### Install
+Just clone this repo and install the resnet models. Use FACE_MODEL to specify the desired model.
 ```
 [matias@laptop ~]$ git clone https://github.com/matiasdelellis/facerecognition-external-model.git
 Clonando en 'facerecognition-external-model'...
@@ -36,10 +46,8 @@ bzip2 -d vendor/models/1/shape_predictor_5_face_landmarks.dat.bz2
 [matias@laptop facerecognition-external-model]$
 ```
 
-## Usage
-
-### Configure Service
-
+### Usage
+#### Configure Service
 You must generate a shared api key and save it in the file `api.key`.
 ```
 [matias@laptop facerecognition-external-model]$ openssl rand -base64 32
@@ -71,7 +79,7 @@ Or you can just run: `make FACE_MODEL=1 serve`.
 
 Note that this service is running on `http://192.168.1.103:8080/`
 
-### Test
+## Test
 You can test if the service is running using curl.
 ```
 [matias@laptop ~]$ curl http://192.168.1.103:8080/welcome
@@ -90,7 +98,7 @@ If curl responds something like the following, surely you have a firewall with p
 curl: (7) Failed to connect to 192.168.1.103 port 8080: No route to host
 ```
 
-### Use
+## Use
 If the service is accessible, you can now configure Nextcloud, indicating that you have an external model at this address, and the shared api key. So, you must add these lines to your `config/config.php` file.
 ```
 [matias@nube ~]$ cat nextcloud/config/config.php

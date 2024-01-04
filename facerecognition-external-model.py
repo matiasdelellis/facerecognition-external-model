@@ -6,25 +6,10 @@ import os
 import json
 import numpy
 
-# Model files (FACE_MODEL is 1-indexed)
-DETECTOR_PATHS = (
-    None,
-    "vendor/models/1/mmod_human_face_detector.dat",
-    "vendor/models/2/mmod_human_face_detector.dat",
-    None,
-)
-PREDICTOR_PATHS = (
-    None,
-    "vendor/models/1/shape_predictor_5_face_landmarks.dat",
-    "vendor/models/2/shape_predictor_68_face_landmarks.dat",
-    "vendor/models/3/shape_predictor_5_face_landmarks.dat",
-)
-FACE_REC_MODEL_PATHS = (
-    None,
-    "vendor/models/1/dlib_face_recognition_resnet_model_v1.dat",
-    "vendor/models/2/dlib_face_recognition_resnet_model_v1.dat",
-    "vendor/models/3/dlib_face_recognition_resnet_model_v1.dat",
-)
+# Model files
+DETECTOR_PATH = "vendor/models/mmod_human_face_detector.dat"
+PREDICTOR_PATH = "vendor/models/shape_predictor_5_face_landmarks.dat"
+FACE_REC_MODEL_PATH = "vendor/models/dlib_face_recognition_resnet_model_v1.dat"
 
 CNN_DETECTOR: object = None
 PREDICTOR: object = None
@@ -44,7 +29,7 @@ app = Flask(__name__)
 try:
     FACE_MODEL = int(os.environ["FACE_MODEL"])
 except KeyError:
-    FACE_MODEL = 1
+    FACE_MODEL = 4
 
 
 # Security of model service
@@ -64,7 +49,7 @@ def require_appkey(view_function):
     return decorated_function
 
 
-# model 1 and 2 face detection
+# model 1 face detection
 def cnn_detect(img: numpy.ndarray) -> list:
     dets: list = CNN_DETECTOR(img)
 
@@ -127,7 +112,7 @@ def cnn_hog_detect(img: numpy.ndarray) -> Tuple[int, list]:
 DETECT_FACES_FUNCTIONS: Tuple[Callable[[numpy.ndarray], Tuple[int, list]]] = (
     None,
     cnn_detect,
-    cnn_detect,
+    None,
     hog_detect,
     cnn_hog_detect,
 )
@@ -178,44 +163,42 @@ def compute():
 @require_appkey
 def open_model():
     global CNN_DETECTOR, HOG_DETECTOR, PREDICTOR, FACE_REC
-    # set up model 4 like it was model 1
-    model = FACE_MODEL if FACE_MODEL != 4 else 1
     # we don't need the cnn detector for model 3
     if FACE_MODEL != 3:
-        CNN_DETECTOR = dlib.cnn_face_detection_model_v1(DETECTOR_PATHS[model])
+        CNN_DETECTOR = dlib.cnn_face_detection_model_v1(DETECTOR_PATH)
     # we need the hog detector for models 3 and 4
     if FACE_MODEL in (3, 4):
         HOG_DETECTOR = dlib.get_frontal_face_detector()
 
-    PREDICTOR = dlib.shape_predictor(PREDICTOR_PATHS[model])
-    FACE_REC = dlib.face_recognition_model_v1(FACE_REC_MODEL_PATHS[model])
+    PREDICTOR = dlib.shape_predictor(PREDICTOR_PATH)
+    FACE_REC = dlib.face_recognition_model_v1(FACE_REC_MODEL_PATH)
 
     return {"preferred_mimetype": "image/jpeg", "maximum_area": 3840 * 2160}
 
 
+@app.route("/health")
+def health():
+    return 'ok'
+
 @app.route("/welcome")
 def welcome():
-    model = FACE_MODEL if FACE_MODEL != 4 else 1
     if (
         (
-            DETECTOR_PATHS[model]
-            and not os.path.exists(DETECTOR_PATHS[model])
+            not os.path.exists(DETECTOR_PATH)
         )
         or (
-            PREDICTOR_PATHS[model]
-            and not os.path.exists(PREDICTOR_PATHS[model])
+            not os.path.exists(PREDICTOR_PATH)
         )
         or (
-            FACE_REC_MODEL_PATHS[model]
-            and not os.path.exists(FACE_REC_MODEL_PATHS[model])
+            not os.path.exists(FACE_REC_MODEL_PATH)
         )
     ):
         return {
             "facerecognition-external-model":
-                "Neural network files are missing. Install them",
+                "Neural network files are missing. Install them with 'make download-models",
             "version": "0.1.0",
         }
-    return {"facerecognition-external-model": "welcome", "version": "0.1.0"}
+    return {"facerecognition-external-model": "welcome", "version": "0.1.0", "model": FACE_MODEL}
 
 
 # Conversion utilities

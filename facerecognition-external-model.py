@@ -198,7 +198,7 @@ def welcome():
                 "Neural network files are missing. Install them with 'make download-models",
             "version": "0.1.0",
         }
-    return {"facerecognition-external-model": "welcome", "version": "0.1.0", "model": FACE_MODEL}
+    return {"facerecognition-external-model": "welcome", "version": "0.2.0", "model": FACE_MODEL}
 
 
 # Conversion utilities

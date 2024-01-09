@@ -24,6 +24,7 @@ if not os.path.exists(folder_path):
 for filename in os.listdir(folder_path):
     os.unlink(os.path.join(folder_path, filename))
 
+
 # Model service
 app = Flask(__name__)
 try:
@@ -122,6 +123,9 @@ DETECT_FACES_FUNCTIONS: Tuple[Callable[[numpy.ndarray], Tuple[int, list]]] = (
 @app.route("/detect", methods=["POST"])
 @require_appkey
 def detect_faces() -> dict:
+    if FACE_REC is None:
+        abort(412)
+
     uploaded_file = request.files["file"]
 
     filename = os.path.basename(uploaded_file.filename)
@@ -140,6 +144,9 @@ def detect_faces() -> dict:
 @app.route("/compute", methods=["POST"])
 @require_appkey
 def compute():
+    if FACE_REC is None:
+        abort(412)
+
     uploaded_file = request.files["file"]
     face_json: dict = json.loads(request.form.get("face"))
 

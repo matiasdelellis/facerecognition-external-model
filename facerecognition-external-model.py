@@ -6,6 +6,10 @@ import os
 import json
 import numpy
 
+
+# Info
+PACKAGE_VERSION = "1.0.0"
+
 # Model files
 DETECTOR_PATH = "vendor/models/mmod_human_face_detector.dat"
 PREDICTOR_PATH = "vendor/models/shape_predictor_5_face_landmarks.dat"
@@ -211,9 +215,9 @@ def welcome():
         return {
             "facerecognition-external-model":
                 "Neural network files are missing. Install them with 'make download-models",
-            "version": "0.1.0",
+            "version": PACKAGE_VERSION
         }
-    return {"facerecognition-external-model": "welcome", "version": "0.2.0", "model": FACE_MODEL}
+    return {"facerecognition-external-model": "welcome", "version": PACKAGE_VERSION, "model": FACE_MODEL}
 
 
 # Conversion utilities

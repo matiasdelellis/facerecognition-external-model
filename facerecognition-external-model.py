@@ -108,6 +108,10 @@ DETECT_FACES_FUNCTIONS: Tuple[Callable[[numpy.ndarray], Tuple[int, list]]] = (
 
 def open_dlib_models():
     global CNN_DETECTOR, HOG_DETECTOR, PREDICTOR, FACE_REC
+
+    if FACE_REC is not None:
+        return
+
     # we don't need the cnn detector for model 3
     if FACE_MODEL != 3:
         CNN_DETECTOR = dlib.cnn_face_detection_model_v1(DETECTOR_PATH)
@@ -143,9 +147,6 @@ def require_appkey(view_function):
 @app.route("/detect", methods=["POST"])
 @require_appkey
 def detect_faces() -> dict:
-    if FACE_REC is None:
-        abort(412)
-
     uploaded_file = request.files["file"]
 
     filename = os.path.basename(uploaded_file.filename)
@@ -157,6 +158,9 @@ def detect_faces() -> dict:
     if numpy.shape(img)[0] * numpy.shape(img)[1] > MAX_IMG_SIZE:
         abort(412)
 
+    if FACE_REC is None:
+        open_dlib_models()
+
     faces = DETECT_FACES_FUNCTIONS[FACE_MODEL](img)
 
     os.remove(image_path)
@@ -166,9 +170,6 @@ def detect_faces() -> dict:
 @app.route("/compute", methods=["POST"])
 @require_appkey
 def compute():
-    if FACE_REC is None:
-        abort(412)
-
     uploaded_file = request.files["file"]
     face_json: dict = json.loads(request.form.get("face"))
 
@@ -179,6 +180,9 @@ def compute():
 
     if numpy.shape(img)[0] * numpy.shape(img)[1] > MAX_IMG_SIZE:
         abort(412)
+
+    if FACE_REC is None:
+        open_dlib_models()
 
     shape: dlib.full_object_detection = PREDICTOR(img, jsonToRect(face_json))
     descriptor: dlib.vector = FACE_REC.compute_face_descriptor(img, shape)

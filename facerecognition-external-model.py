@@ -38,24 +38,6 @@ try:
 except KeyError:
     FACE_MODEL = 4
 
-
-# Security of model service
-def require_appkey(view_function):
-    @wraps(view_function)
-    def decorated_function(*args, **kwargs):
-        if 'API_KEY' in os.environ:
-            key = os.environ.get('API_KEY')
-        else:
-            with open('api.key', 'r') as apikey:
-                key = apikey.read().replace('\n', '')
-        if request.headers.get('x-api-key') and request.headers.get('x-api-key') == key:
-            return view_function(*args, **kwargs)
-        else:
-            abort(401)
-
-    return decorated_function
-
-
 # model 1 face detection
 def cnn_detect(img: numpy.ndarray) -> list:
     dets: list = CNN_DETECTOR(img)
@@ -124,8 +106,40 @@ DETECT_FACES_FUNCTIONS: Tuple[Callable[[numpy.ndarray], Tuple[int, list]]] = (
     cnn_hog_detect,
 )
 
+def open_dlib_models():
+    global CNN_DETECTOR, HOG_DETECTOR, PREDICTOR, FACE_REC
+    # we don't need the cnn detector for model 3
+    if FACE_MODEL != 3:
+        CNN_DETECTOR = dlib.cnn_face_detection_model_v1(DETECTOR_PATH)
+    # we need the hog detector for models 3 and 4
+    if FACE_MODEL in (3, 4):
+        HOG_DETECTOR = dlib.get_frontal_face_detector()
 
-# Model service endpints
+    PREDICTOR = dlib.shape_predictor(PREDICTOR_PATH)
+    FACE_REC = dlib.face_recognition_model_v1(FACE_REC_MODEL_PATH)
+
+
+#
+# Model service
+#
+
+# Security of model service
+def require_appkey(view_function):
+    @wraps(view_function)
+    def decorated_function(*args, **kwargs):
+        if 'API_KEY' in os.environ:
+            key = os.environ.get('API_KEY')
+        else:
+            with open('api.key', 'r') as apikey:
+                key = apikey.read().replace('\n', '')
+        if request.headers.get('x-api-key') and request.headers.get('x-api-key') == key:
+            return view_function(*args, **kwargs)
+        else:
+            abort(401)
+
+    return decorated_function
+
+# Endpoints
 @app.route("/detect", methods=["POST"])
 @require_appkey
 def detect_faces() -> dict:
@@ -148,7 +162,6 @@ def detect_faces() -> dict:
     os.remove(image_path)
 
     return {"filename": filename, "faces-count": len(faces), "faces": faces}
-
 
 @app.route("/compute", methods=["POST"])
 @require_appkey
@@ -177,23 +190,11 @@ def compute():
 
     return {"filename": filename, "face": face_json}
 
-
 @app.route("/open")
 @require_appkey
 def open_model():
-    global CNN_DETECTOR, HOG_DETECTOR, PREDICTOR, FACE_REC
-    # we don't need the cnn detector for model 3
-    if FACE_MODEL != 3:
-        CNN_DETECTOR = dlib.cnn_face_detection_model_v1(DETECTOR_PATH)
-    # we need the hog detector for models 3 and 4
-    if FACE_MODEL in (3, 4):
-        HOG_DETECTOR = dlib.get_frontal_face_detector()
-
-    PREDICTOR = dlib.shape_predictor(PREDICTOR_PATH)
-    FACE_REC = dlib.face_recognition_model_v1(FACE_REC_MODEL_PATH)
-
+    open_dlib_models()
     return {"preferred_mimetype": "image/jpeg", "maximum_area": MAX_IMG_SIZE}
-
 
 @app.route("/health")
 def health():
@@ -219,8 +220,9 @@ def welcome():
         }
     return {"facerecognition-external-model": "welcome", "version": PACKAGE_VERSION, "model": FACE_MODEL}
 
-
+#
 # Conversion utilities
+#
 def shapeToList(shape):
     partList = []
     for i in range(shape.num_parts):

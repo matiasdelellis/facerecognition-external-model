@@ -15,6 +15,8 @@ CNN_DETECTOR: object = None
 PREDICTOR: object = None
 FACE_REC: object = None
 
+MAX_IMG_SIZE = 3840 * 2160
+
 # Check image folder
 folder_path = "images"
 if not os.path.exists(folder_path):
@@ -134,6 +136,9 @@ def detect_faces() -> dict:
     uploaded_file.save(image_path)
     img: numpy.ndarray = dlib.load_rgb_image(image_path)
 
+    if numpy.shape(img)[0] * numpy.shape(img)[1] > MAX_IMG_SIZE:
+        abort(412)
+
     faces = DETECT_FACES_FUNCTIONS[FACE_MODEL](img)
 
     os.remove(image_path)
@@ -154,6 +159,9 @@ def compute():
     uploaded_file.save(filename)
 
     img: numpy.ndarray = dlib.load_rgb_image(filename)
+
+    if numpy.shape(img)[0] * numpy.shape(img)[1] > MAX_IMG_SIZE:
+        abort(412)
 
     shape: dlib.full_object_detection = PREDICTOR(img, jsonToRect(face_json))
     descriptor: dlib.vector = FACE_REC.compute_face_descriptor(img, shape)
@@ -180,7 +188,7 @@ def open_model():
     PREDICTOR = dlib.shape_predictor(PREDICTOR_PATH)
     FACE_REC = dlib.face_recognition_model_v1(FACE_REC_MODEL_PATH)
 
-    return {"preferred_mimetype": "image/jpeg", "maximum_area": 3840 * 2160}
+    return {"preferred_mimetype": "image/jpeg", "maximum_area": MAX_IMG_SIZE}
 
 
 @app.route("/health")

@@ -22,12 +22,12 @@ NZ9ciQuH0djnyyTcsDhNL7so6SVrR01znNnv0iXLrSk=
 The fastest way to get this up and running without manual installation and configuration is a docker image. You only have to define the api key and the exposed port:
 ```sh
 # Expose the service on 8080 TCP port and send the API key as a file. By default it uses model 4 for facial recognition.
-[matias@services ~]$ docker run --rm -i -p 8080:5000 -v /path/to/api.key:/app/api.key facerecognition matiasdelellis/facerecognition-external-model:v0.2.0
+[matias@services ~]$ docker run --rm -i -p 8080:5000 -v /path/to/api.key:/app/api.key --name facerecognition matiasdelellis/facerecognition-external-model:v0.2.0
 # You can pass the API key as an environment variable, but it is a practice that is not recommended because it is exposed on the command line.
-[matias@services ~]$ docker run --rm -i -p 8080:5000 -e API_KEY="NZ9ciQuH0djnyyTcsDhNL7so6SVrR01znNnv0iXLrSk=" matiasdelellis/facerecognition-external-model:v0.2.0
+[matias@services ~]$ docker run --rm -i -p 8080:5000 -e API_KEY="NZ9ciQuH0djnyyTcsDhNL7so6SVrR01znNnv0iXLrSk=" --name facerecognition matiasdelellis/facerecognition-external-model:v0.2.0
 # You can change the default model using the `FACE_MODEL` environment variable.
 # If you do not set the API key, it remains "some-super-secret-api-key". Needless to say, it is not advisable to leave it by default.
-[matias@services ~]$ docker run --rm -i -p 8080:5000 -e FACE_MODEL=3 facerecognition matiasdelellis/facerecognition-external-model:v0.2.0 
+[matias@services ~]$ docker run --rm -i -p 8080:5000 -e FACE_MODEL=3 --name facerecognition matiasdelellis/facerecognition-external-model:v0.2.0 
 ```
 
 ### Test

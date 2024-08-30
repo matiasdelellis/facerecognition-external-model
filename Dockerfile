@@ -24,4 +24,4 @@ EXPOSE 5000
 ENV API_KEY=some-super-secret-api-key
 ENV FLASK_APP=facerecognition-external-model.py
 
-CMD flask run -h 0.0.0.0
+CMD flask run -h ::

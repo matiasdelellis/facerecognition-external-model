@@ -26,4 +26,4 @@ ENV GUNICORN_WORKERS=${GUNICORN_WORKERS}
 ENV API_KEY=some-super-secret-api-key
 ENV FLASK_APP=facerecognition-external-model.py
 
-CMD ["gunicorn"  , "--bind", "[::]:5000", "--timeout", "300", "--workers", "${GUNICORN_WORKERS}", "facerecognition-external-model:app", "--threads", "${GUNICORN_WORKERS}", "--access-logfile", "-"]
+CMD ["gunicorn"  , "--bind", "[::]:5000", "--timeout", "300", "--workers", "$GUNICORN_WORKERS", "facerecognition-external-model:app", "--threads", "$GUNICORN_WORKERS", "--access-logfile", "-"]

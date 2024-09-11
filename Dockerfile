@@ -21,9 +21,11 @@ WORKDIR /app/
 
 EXPOSE 5000
 
-ARG GUNICORN_WORKERS="1"
+ARG GUNICORN_WORKERS="1" \
+    PORT="5000"
 ENV GUNICORN_WORKERS="${GUNICORN_WORKERS}"\
+    PORT="${PORT}"\
     API_KEY=some-super-secret-api-key\
     FLASK_APP=facerecognition-external-model.py
 
-CMD ["gunicorn"  , "--bind", "[::]:5000", "--timeout", "300", "--workers", "$GUNICORN_WORKERS", "facerecognition-external-model:app", "--threads", "$GUNICORN_WORKERS", "--access-logfile", "-"]
+CMD ["gunicorn"  , "--bind", "[::]:5000", "facerecognition-external-model:app"]

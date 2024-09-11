@@ -22,6 +22,7 @@ WORKDIR /app/
 EXPOSE 5000
 
 ARG GUNICORN_WORKERS="1"
+ENV GUNICORN_WORKERS=${GUNICORN_WORKERS}
 ENV API_KEY=some-super-secret-api-key
 ENV FLASK_APP=facerecognition-external-model.py
 

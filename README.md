@@ -69,7 +69,7 @@ The model 5 (ExternalModel) was configured as default
 ... and that's all my friends. You can now continue with the backgroud_task. :smiley:
 
 Or if you want to use parallel processing during an import:
-``sh
+```sh
 #!/bin/bash
 
 set -o errexit
@@ -79,9 +79,13 @@ dir=$(pwd)
 cd /var/www/nextcloud/html/
 sudo -u www-data php --define apc.enable_cli=1 ./occ face:stats
 
-echo -n "Select user for parallel processing:"
+echo -n "Select user for import & parallel processing:"
 read user
 echo ""
+
+echo "Enabling facerecognition for $user..."
+sudo -u www-data php --define apc.enable_cli=1 ./occ user:setting $user facerecognition enabled true
+echo "Done"
 
 echo "Synchronizing $user files..."
 sudo -u www-data php --define apc.enable_cli=1 ./occ face:background_job -u $user --sync-mode
@@ -103,5 +107,5 @@ echo "Calculating $user face clusters..."
 sudo -u www-data php --define apc.enable_cli=1 ./occ face:background_job -u user --cluster-mode
 echo "Done"
 cd $dir
-``
+```
 That runs quite long, best runing it inside a tmux/screen session.

@@ -13,7 +13,7 @@ COPY --from=builder /app/dlib*.whl /tmp/
 COPY --from=builder /app/vendor/ /app/vendor/
 COPY facerecognition-external-model.py /app/
 
-RUN pip install flask numpy \
+RUN pip install flask numpy gunicorn \
     && pip install --no-index -f /tmp/ dlib \
     && rm /tmp/dlib*.whl
 
@@ -21,7 +21,8 @@ WORKDIR /app/
 
 EXPOSE 5000
 
+ARG GUNICORN_WORKERS="1"
 ENV API_KEY=some-super-secret-api-key
 ENV FLASK_APP=facerecognition-external-model.py
 
-CMD flask run -h ::
+CMD ["gunicorn"  , "--bind", "[::]:5000", "--timeout", "300", "--workers", "${GUNICORN_WORKERS}", "facerecognition-external-model:app", "--threads", "${GUNICORN_WORKERS}", "--access-logfile", "-"]

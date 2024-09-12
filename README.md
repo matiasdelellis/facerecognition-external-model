@@ -29,6 +29,7 @@ The fastest way to get this up and running without manual installation and confi
 # If you do not set the API key, it remains "some-super-secret-api-key". Needless to say, it is not advisable to leave it by default.
 [matias@services ~]$ docker run --rm -i -p 8080:5000 -e FACE_MODEL=3 --name facerecognition matiasdelellis/facerecognition-external-model:v0.2.0 
 ```
+If you want to use multiple connections at once (enough memory is mandatory), either for multiple instances or for faster procession large amounts of photos (only a single core is used for each process) you can set the enviroment variable "GUNICORN_WORKERS" to the desired number.
 
 ### Test
 Check that the service is running using the `/welcome` endpoint.
@@ -66,3 +67,45 @@ The model 5 (ExternalModel) was configured as default
 ```
 
 ... and that's all my friends. You can now continue with the backgroud_task. :smiley:
+
+Or if you want to use parallel processing during an import:
+```sh
+#!/bin/bash
+
+set -o errexit
+
+dir=$(pwd)
+# your nextcloud path
+cd /var/www/nextcloud/html/
+sudo -u www-data php --define apc.enable_cli=1 ./occ face:stats
+
+echo -n "Select user for import & parallel processing:"
+read user
+echo ""
+
+echo "Enabling facerecognition for $user..."
+sudo -u www-data php --define apc.enable_cli=1 ./occ user:setting $user facerecognition enabled true
+echo "Done"
+
+echo "Synchronizing $user files..."
+sudo -u www-data php --define apc.enable_cli=1 ./occ face:background_job -u $user --sync-mode
+echo "Done"
+
+echo "Analyzing $user files..."
+# the upper number has to be lower or equal to the number of GUNICORN_WORKERS
+for i in {1..3}; do
+    sudo -u www-data php --define apc.enable_cli=1 ./occ face:background_job -u $user --analyze-mode &
+    pids[${i}]=$!
+done
+
+for pid in ${pids[*]}; do
+    wait $pid
+done
+echo "Done"
+
+echo "Calculating $user face clusters..."
+sudo -u www-data php --define apc.enable_cli=1 ./occ face:background_job -u user --cluster-mode
+echo "Done"
+cd $dir
+```
+That runs quite long, best runing it inside a tmux/screen session.

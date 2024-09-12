@@ -131,7 +131,7 @@ def open_dlib_models():
 def require_appkey(view_function):
     @wraps(view_function)
     def decorated_function(*args, **kwargs):
-        if 'API_KEY' in os.environ:
+        if 'API_KEY' in os.environ and os.environ['API_KEY']:
             key = os.environ.get('API_KEY')
         else:
             with open('api.key', 'r') as apikey:

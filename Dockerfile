@@ -11,12 +11,13 @@ FROM python:slim
 
 COPY --from=builder /app/dlib*.whl /tmp/
 COPY --from=builder /app/vendor/ /app/vendor/
-COPY facerecognition-external-model.py /app/
-COPY gunicorn_config.py /app/
 
 RUN pip install flask numpy gunicorn \
     && pip install --no-index -f /tmp/ dlib \
     && rm /tmp/dlib*.whl
+
+COPY facerecognition-external-model.py /app/
+COPY gunicorn_config.py /app/
 
 WORKDIR /app/
 

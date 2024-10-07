@@ -10,3 +10,14 @@ threads = int(os.getenv("GUNICORN_WORKERS", 1))
 reload = bool("false")
 
 timeout = int(os.getenv("REQ_TIMEOUT", 300))
+
+def on_starting(server):
+    # Check image folder
+    folder_path = "images"
+    if not os.path.exists(folder_path):
+        server.log.debug("Creating directory for temporary files.")
+        os.mkdir(folder_path)
+    # Clean old files if exists.
+    server.log.debug("Cleaning up old temporary files.")
+    for filename in os.listdir(folder_path):
+        os.unlink(os.path.join(folder_path, filename))

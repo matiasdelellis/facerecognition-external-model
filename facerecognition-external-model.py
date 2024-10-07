@@ -21,15 +21,7 @@ FACE_REC: object = None
 
 MAX_IMG_SIZE = 3840 * 2160
 
-# Check image folder
 folder_path = "images"
-if not os.path.exists(folder_path):
-    os.mkdir(folder_path)
-
-# Clean old files if exists.
-for filename in os.listdir(folder_path):
-    os.unlink(os.path.join(folder_path, filename))
-
 
 # Model service
 app = Flask(__name__)

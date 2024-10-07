@@ -11,12 +11,13 @@ FROM python:slim
 
 COPY --from=builder /app/dlib*.whl /tmp/
 COPY --from=builder /app/vendor/ /app/vendor/
-COPY facerecognition-external-model.py /app/
-COPY gunicorn_config.py /app/
 
 RUN pip install flask numpy gunicorn \
     && pip install --no-index -f /tmp/ dlib \
     && rm /tmp/dlib*.whl
+
+COPY facerecognition-external-model.py /app/
+COPY gunicorn_config.py /app/
 
 WORKDIR /app/
 
@@ -29,4 +30,4 @@ ENV GUNICORN_WORKERS="${GUNICORN_WORKERS}"\
     API_KEY=some-super-secret-api-key\
     FLASK_APP=facerecognition-external-model.py
 
-CMD ["gunicorn"  , "-c", "gunicorn_config.py", "facerecognition-external-model:app"]
+ENTRYPOINT ["gunicorn"  , "-c", "gunicorn_config.py", "facerecognition-external-model:app"]

@@ -104,7 +104,7 @@ done
 echo "Done"
 
 echo "Calculating $user face clusters..."
-sudo -u www-data php --define apc.enable_cli=1 ./occ face:background_job -u user --cluster-mode
+sudo -u www-data php --define apc.enable_cli=1 ./occ face:background_job -u $user --cluster-mode
 echo "Done"
 cd $dir
 ```

@@ -1,19 +1,27 @@
-FROM python:slim AS builder
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS builder
 
 COPY Makefile /app/
 
-RUN apt update -yq \
-    && apt install -yq bzip2 cmake g++ make wget \
-    && pip wheel -w /app/ dlib \
-    && make -C /app/ download-models
+RUN apt update -yq
+RUN apt install -yq python3 python3-pip bzip2 cmake g++ make wget git libopenblas-dev liblapack-dev
 
-FROM python:slim
+# This is TMP until this PR is merged:
+# https://github.com/davisking/dlib/pull/3090
+RUN git clone https://github.com/smu-sc-gj/dlib
+RUN cd dlib && pip wheel -w /app/ . -vvv
+RUN make -C /app/ download-models
+
+# CUDA Runtime
+FROM  nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04
+
+RUN apt update -yq
+RUN apt install -yq python3 python3-pip libopenblas-dev liblapack-dev
 
 COPY --from=builder /app/dlib*.whl /tmp/
 COPY --from=builder /app/vendor/ /app/vendor/
 
-RUN pip install flask numpy gunicorn \
-    && pip install --no-index -f /tmp/ dlib \
+RUN pip install --break-system-packages flask numpy gunicorn
+RUN pip install --break-system-packages --no-index -f /tmp/ dlib \
     && rm /tmp/dlib*.whl
 
 COPY facerecognition-external-model.py /app/

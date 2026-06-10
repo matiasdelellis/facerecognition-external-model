@@ -37,6 +37,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           context: './'
           no-cache: true
-          file: 'Dockerfile'
+          file: 'docker/Dockerfile'
           tags: matiasdelellis/facerecognition-external-model:${{ github.event.inputs.tagName }}
           provenance: false

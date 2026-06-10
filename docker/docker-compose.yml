@@ -1,0 +1,21 @@
+services:
+  facerecognition:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: matiasdelellis/facerecognition-external-model:local
+    container_name: facerecognition
+    restart: unless-stopped
+    ports:
+      - "8080:5000"
+    env_file:
+      - ../.env
+    environment:
+      FACE_MODEL: ${FACE_MODEL:-4}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

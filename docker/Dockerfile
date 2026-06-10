@@ -1,6 +1,6 @@
 FROM python:slim AS builder
 
-COPY Makefile /app/
+COPY docker/Makefile /app/Makefile
 
 RUN apt update -yq \
     && apt install -yq bzip2 cmake g++ make wget \
@@ -16,8 +16,7 @@ RUN pip install flask numpy gunicorn \
     && pip install --no-index -f /tmp/ dlib \
     && rm /tmp/dlib*.whl
 
-COPY facerecognition-external-model.py /app/
-COPY gunicorn_config.py /app/
+COPY app/ /app/app/
 
 WORKDIR /app/
 
@@ -28,6 +27,6 @@ ARG GUNICORN_WORKERS="1" \
 ENV GUNICORN_WORKERS="${GUNICORN_WORKERS}"\
     PORT="${PORT}"\
     API_KEY=some-super-secret-api-key\
-    FLASK_APP=facerecognition-external-model.py
+    FLASK_APP=app.server
 
-ENTRYPOINT ["gunicorn"  , "-c", "gunicorn_config.py", "facerecognition-external-model:app"]
+ENTRYPOINT ["gunicorn", "-c", "app/gunicorn.py", "app.server:app"]
